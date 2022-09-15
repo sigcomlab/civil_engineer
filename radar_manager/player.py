@@ -1,8 +1,8 @@
 import h5py
 import numpy as np
 import multiprocessing as mp
-from Libraries.utils.utils import precise_sleep
-from Libraries.radar_manager.get_data import get_data_by_type
+from utils.utils import precise_sleep
+from radar_manager.get_data import get_data_by_type
 import time
 
 
