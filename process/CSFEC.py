@@ -7,12 +7,12 @@ class const:
     def __init__(self, K, N, M, NCSFE=5, Nya=0, minmaxidx=None):
         """
 
-        :param K:
-        :param N:
-        :param M:
-        :param NCSFE:
-        :param Nya:
-        :param minmaxidx:
+        :param K: number of tones to find
+        :param N: lenght of original signal
+        :param M: oversampling factor
+        :param NCSFE: refinements iterations
+        :param Nya: ya refiniments
+        :param minmaxidx: indices of interests
         """
         if minmaxidx is not None:
             self.min_idx = minmaxidx[0]
@@ -154,4 +154,4 @@ def CSFEC(x0, cnst: const):
             F0 = residualDFT0(q, cnst)
             AF0_local = sum(A[idx3] * F0, axis=0)
             A[k] = 1 / cnst.N * (sum(x[0, :] * exp(-1j * 2 * pi * cnst.n * f[k]))) - AF0_local
-    return A, f
+    return A[:, 0], f[:, 0]

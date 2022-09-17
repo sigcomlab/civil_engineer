@@ -269,7 +269,8 @@ class Profiles:
         :param raw_data: raw data from the radar
         :return: raw_data purged along time axis
         """
-        return raw_data[self.dump_first:-self.dump_last, self.virtual_channels, ...]
+        last_sample = raw_data.shape[0]-self.dump_last
+        return raw_data[self.dump_first:last_sample, self.virtual_channels, ...]
 
     def range(self, raw_data, calibrated=True):
         """
