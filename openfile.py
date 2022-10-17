@@ -8,10 +8,11 @@ from radar_manager.get_data import N_DOP
 
 from process.CSFEC import CSFEC, const
 import os
-from utils.utils import root_dir
+from utils.utils import root_dir, askopenfile
 from datetime import datetime
 now = datetime.now()
 filename = now.strftime("%m-%d-%Y_%H-%M-%S_lab_civili.h5")
+import scipy.io as sio
 
 
 class Point:
@@ -31,8 +32,9 @@ mat_calib = np.load(path_to_calib)
 
 if __name__ == '__main__':
     set_start_method('spawn')
+    filename = askopenfile('/run/media/giorgio')
 
-    with Opener('09-16-2022_11-53-18_lab_civili.h5', autorun=True, pause=True) as FILE:
+    with Opener(filename, autorun=True, pause=True) as FILE:
         FILE.repr_speed = 0.3
         SRS_C = FILE['Srs_harvest_182']
         FILE.pause = False
@@ -58,6 +60,7 @@ if __name__ == '__main__':
         plotampli = Show2D({'r': Generic2DLineItem(4096, pen=(255, 0, 0, 255)),
                             'g': Generic2DLineItem(4096, pen=(0, 255, 0, 255)),
                             'b': Generic2DLineItem(4096, pen=(0, 0, 255, 255))}, title='Amplitude plot vs time')
+
         plotcsfe = Show2D({'r0': Generic2DLineItem(4096, pen=(255, 0, 0, 255)),
                            'g0': Generic2DLineItem(4096, pen=(0, 255, 0, 255)),
                            'b0': Generic2DLineItem(4096, pen=(0, 0, 255, 255)),
@@ -140,7 +143,6 @@ if __name__ == '__main__':
                     max_freq = max_distance * 2 * profile_c.km
                     max_csfe_idx = int(max_freq * profile_c.ts * 512 * M)
 
-
                     plot3d[modifier].x = ev[1].x
                     plot3d[modifier].y = ev[1].y
 
@@ -175,6 +177,8 @@ if __name__ == '__main__':
                         plotphase['r'].y -= plotphase['r'].y[-1]
                         plotphase['g'].y -= plotphase['g'].y[-1]
                         plotphase['b'].y -= plotphase['b'].y[-1]
+                    elif ev[1] == 'm':
+                        sio.savemat()
                     else:
                         print('bad modifier, ignoring: ', ev[1])
             # do csfe
