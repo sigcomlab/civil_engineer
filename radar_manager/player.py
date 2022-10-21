@@ -75,6 +75,13 @@ class Player:
         self._dset = self._file[self._group]['raw_data']
         self._is_ready.value = 1
 
+    def display_params(self):
+        """Prints all the parameters of an object"""
+        print('\n\n{} PARAMETERS:'.format(self.str_id))
+        for k in self.params.keys():
+            print(k + ':', self.params[k])
+        print('\n\n')
+
     @property
     def n_frames(self):
         return self._n_frames
@@ -240,14 +247,24 @@ class Opener(dict):
 
     @time.setter
     def time(self, value):
-        if value > self._time.value:
-            self.idx = np.argmin(np.absolute(self._timestamp_table[self._frame_idx.value+1:, 0] - value))+self._frame_idx.value
-        elif value > self._time.value:
-            self.idx = np.argmin(np.absolute(self._timestamp_table[:self._frame_idx.value+1, 0] - value))
-        ts, dev, frame_idx = self._timestamp_table[self.idx, :]
-        self._time.value = ts
+        """
+        Set the current file time.
+        """
+        if self._frame_idx.value+1 < self._timestamp_table.shape[0]:
+            # If you move the time "to the future" wrt current time, it forces to take the next frame for every
+            if value > self._time.value:
+                self.idx = np.argmin(np.absolute(self._timestamp_table[self._frame_idx.value+1:, 0] - value))+self._frame_idx.value
+            elif value > self._time.value:
+                self.idx = np.argmin(np.absolute(self._timestamp_table[:self._frame_idx.value+1, 0] - value))
+            ts, dev, frame_idx = self._timestamp_table[self.idx, :]
+            self._time.value = ts
 
-        self.cursor_moved = 1
+            self.cursor_moved = 1
+        else:
+            print('Reach the end of the dataset')
+            self._end_of_dataset.value = True
+            self.pause = True
+            self.cursor_moved = False
 
     @property
     def eof(self):
