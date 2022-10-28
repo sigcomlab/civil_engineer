@@ -30,7 +30,7 @@ pair_VA_def = np.load(path_to_VA)
 mat_calib = np.load(path_to_calib)
 
 if __name__ == '__main__':
-    set_start_method('spawn')
+    # set_start_method('spawn')
     filename = askopenfile('/run/media/giorgio')
 
     with Opener(filename, autorun=True, pause=True) as FILE:
