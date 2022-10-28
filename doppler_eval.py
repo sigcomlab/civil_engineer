@@ -45,11 +45,12 @@ if __name__ == '__main__':
         doppler_history = np.empty((n_frames, 4))
 
         wavelength = 3e8 / SRS_C.params['fcntr']    # radar wavelength
-        phase_to_speed = wavelength/(4*np.pi*SRS_C.params['tframe'])    # tframe is the time between two consecutive chirps
+        phase_to_speed = wavelength/(np.pi*SRS_C.params['tframe'])    # tframe is the time between two consecutive chirps
+        phase_to_m = wavelength/np.pi
 
         # Profiles contains everything to compute range profiles, angular etc
         profile_c = Profiles(SRS_C, virtual_channels=np.arange(86), min_range=3.6,
-                             max_range=6, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
+                             max_range=10, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
 
         # here is only to create the plots
         plot3d = Plot3D({'apm': Generic3DScatterItem(profile_c.num_bin * profile_c.ang_fft_order, size=1),
@@ -96,6 +97,7 @@ if __name__ == '__main__':
         plot3d['b'].y = modifier_dict['b'].y
 
         k = 0
+        FILE.time = 5
         while plot3d.is_alive and not FILE.eof:
             FILE.time += 0.01
 
@@ -150,7 +152,23 @@ if __name__ == '__main__':
                         plotphase['g'].y -= plotphase['g'].y[-1]
                         plotphase['b'].y -= plotphase['b'].y[-1]
                     elif ev[1] == 'm':
-                        sio.savemat({'data': tpc})
+                        # sio.savemat({'data': tpc})
+                        pass
+                    elif ev[1] == 'u':
+                        for modifier, point in modifier_dict.items():
+                            neighborhood = tot_coords_c[tot_coords_c.distance(point) < 0.1]
+                            point.cartesian_coords = neighborhood.max('intensity').cartesian_coords
+                            point.range_idx = profile_c.range_to_idx(point.range)
+                            point.angle_idx = profile_c.angle_to_idx(point.azimuth, deg=False)
+
+                            if modifier == 'r':
+                                idx_modifier = 0
+                            elif modifier == 'g':
+                                idx_modifier = 1
+                            elif modifier == 'b':
+                                idx_modifier = 2
+
+                            polarproj.addon_scatter[idx_modifier, :] = [point.azimuth, point.range]
                     else:
                         print('bad modifier, ignoring: ', ev[1])
 
@@ -162,13 +180,13 @@ if __name__ == '__main__':
             plotdopp['g'].append(dopp_g, FILE.time)
             plotdopp['b'].append(dopp_b, FILE.time)
 
-            phase_r = np.angle(ap[modifier_dict['r'].range_idx, modifier_dict['r'].angle_idx, 0])
-            phase_g = np.angle(ap[modifier_dict['g'].range_idx, modifier_dict['g'].angle_idx, 0])
-            phase_b = np.angle(ap[modifier_dict['b'].range_idx, modifier_dict['b'].angle_idx, 0])
+            phase_r = np.angle(ap[modifier_dict['r'].range_idx, modifier_dict['r'].angle_idx, 0]) * phase_to_m
+            phase_g = np.angle(ap[modifier_dict['g'].range_idx, modifier_dict['g'].angle_idx, 0]) * phase_to_m
+            phase_b = np.angle(ap[modifier_dict['b'].range_idx, modifier_dict['b'].angle_idx, 0]) * phase_to_m
 
-            plotphase['r'].append(phase_r, FILE.time, unwrap=True)
-            plotphase['g'].append(phase_g, FILE.time, unwrap=True)
-            plotphase['b'].append(phase_b, FILE.time, unwrap=True)
+            plotphase['r'].append(phase_r, FILE.time, unwrap=True, period=2*wavelength)
+            plotphase['g'].append(phase_g, FILE.time, unwrap=True, period=2*wavelength)
+            plotphase['b'].append(phase_b, FILE.time, unwrap=True, period=2*wavelength)
 
             ampli_r = np.absolute(ap[modifier_dict['r'].range_idx, modifier_dict['r'].angle_idx, 0])
             ampli_g = np.absolute(ap[modifier_dict['g'].range_idx, modifier_dict['g'].angle_idx, 0])
@@ -182,13 +200,14 @@ if __name__ == '__main__':
             phases_history[k, :] = FILE.time, phase_r, phase_g, phase_b
             amplitude_history[k, :] = FILE.time, ampli_r, ampli_g, ampli_b
 
-
-
             k += 1
 
         sio.savemat(filename[:-4]+'.mat', {'doppler_history': doppler_history,
                                            'phases_history': phases_history,
-                                           'amplitude_history': amplitude_history})
+                                           'amplitude_history': amplitude_history,
+                                           'r': modifier_dict['r'].cartesian_coords,
+                                           'g': modifier_dict['g'].cartesian_coords,
+                                           'b': modifier_dict['b'].cartesian_coords})
 
 
 
