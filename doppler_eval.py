@@ -154,6 +154,7 @@ if __name__ == '__main__':
                     elif ev[1] == 'm':
                         # sio.savemat({'data': tpc})
                         pass
+                        pass
                     elif ev[1] == 'u':
                         for modifier, point in modifier_dict.items():
                             neighborhood = tot_coords_c[tot_coords_c.distance(point) < 0.1]
