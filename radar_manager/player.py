@@ -131,7 +131,7 @@ class Opener(dict):
         # always remember to close the file
         self._required.value = 0
 
-    def __init__(self, filename, autorun=False, parse=None, pause=False):
+    def __init__(self, filename, autorun=False, parse=None, pause=False, blacklist=None):
         """Replay an .h5 file.
 
         Keyword arguments:
@@ -143,6 +143,8 @@ class Opener(dict):
         and which items have the method .get_data() which returns different objects accordingly to the sensor itself.
         It also implements __enter__ and __exit__ methods so that you can use it in a with statement.
         """
+        if blacklist is None:
+            blacklist = []
         if parse is not None:
             if isinstance(parse, tuple):
                 canparser(filename, parse[0], parse[1])
@@ -153,7 +155,7 @@ class Opener(dict):
                 print('Warning: invalid canparser arguments')
         with h5py.File(filename, 'r') as file:
 
-            self._group_list = list(file)
+            self._group_list = [x for x in list(file) if x not in blacklist]
 
             self._repr_speed = mp.Value('d')
             self._repr_speed.value = 1
