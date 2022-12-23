@@ -4,7 +4,7 @@ from qtplots import Generic3DScatterItem, Plot3D, Show2D, Generic2DLineItem
 import numpy as np
 from multiprocessing import set_start_method
 from process.plotting import PolarProjection
-from radar_manager.get_data import N_DOP
+from radar_manager.get_data import N_DOP, N_TX, N_RX, N_SAMPLES, N_CHIPS
 
 from process.CSFEC import CSFEC, const
 import os
@@ -32,14 +32,14 @@ mat_calib = np.load(path_to_calib)
 if __name__ == '__main__':
     set_start_method('spawn')
 
-    with Opener('09-16-2022_11-53-18_lab_civili.h5', autorun=True, pause=True) as FILE:
-        FILE.repr_speed = 0.3
+    with Opener('10-06-2022_19-25-11_yaris_giorgio.h5', autorun=True, pause=True) as FILE:
+        FILE.repr_speed = 1
         SRS_C = FILE['Srs_harvest_182']
         FILE.pause = False
 
         # This command is needed with SRS only
-        profile_c = Profiles(SRS_C, virtual_channels=np.arange(86), min_range=2.5,
-                             max_range=6.5, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
+        profile_c = Profiles(SRS_C, virtual_channels=np.arange(86), min_range=3,
+                             max_range=12, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
 
         plot3d = Plot3D({'apm': Generic3DScatterItem(profile_c.num_bin * profile_c.ang_fft_order, size=1),
                          'r': Generic3DScatterItem(1, size=10, color='r'),
@@ -58,6 +58,7 @@ if __name__ == '__main__':
         plotampli = Show2D({'r': Generic2DLineItem(4096, pen=(255, 0, 0, 255)),
                             'g': Generic2DLineItem(4096, pen=(0, 255, 0, 255)),
                             'b': Generic2DLineItem(4096, pen=(0, 0, 255, 255))}, title='Amplitude plot vs time')
+
         plotcsfe = Show2D({'r0': Generic2DLineItem(4096, pen=(255, 0, 0, 255)),
                            'g0': Generic2DLineItem(4096, pen=(0, 255, 0, 255)),
                            'b0': Generic2DLineItem(4096, pen=(0, 0, 255, 255)),
@@ -140,7 +141,6 @@ if __name__ == '__main__':
                     max_freq = max_distance * 2 * profile_c.km
                     max_csfe_idx = int(max_freq * profile_c.ts * 512 * M)
 
-
                     plot3d[modifier].x = ev[1].x
                     plot3d[modifier].y = ev[1].y
 
@@ -175,8 +175,12 @@ if __name__ == '__main__':
                         plotphase['r'].y -= plotphase['r'].y[-1]
                         plotphase['g'].y -= plotphase['g'].y[-1]
                         plotphase['b'].y -= plotphase['b'].y[-1]
+                    elif ev[1] == 'd':
+                        print('saving to npy')
+                        np.save(file='09-16-2022_11-53-18_lab_civili_' + str(FILE.time), arr=tpc)
                     else:
                         print('bad modifier, ignoring: ', ev[1])
+
             # do csfe
             for angle, csfe_const, mod in zip(csfe_angles, csfe_constants, ['r', 'g', 'b']):
                 csfe_angle_idx = profile_c.angle_to_idx(angle, deg=True)
@@ -192,11 +196,3 @@ if __name__ == '__main__':
             plotampli['r'].append(np.absolute(ap[modifier_dict['r'].range_idx, modifier_dict['r'].angle_idx]))
             plotampli['g'].append(np.absolute(ap[modifier_dict['g'].range_idx, modifier_dict['g'].angle_idx]))
             plotampli['b'].append(np.absolute(ap[modifier_dict['b'].range_idx, modifier_dict['b'].angle_idx]))
-
-
-
-
-
-
-
-

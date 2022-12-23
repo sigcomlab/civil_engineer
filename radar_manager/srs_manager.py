@@ -137,4 +137,3 @@ class SRSManager(PhyObject):
                             logging.warning('SRS {}: Unknown command: ignored. '.format(self.str_id))
                     except Empty:
                         pass
-

@@ -25,7 +25,7 @@ if __name__ == '__main__':
         time.sleep(1)
         profile_l = Profiles(SRS, virtual_channels=np.arange(86),
                              min_range=0.5,
-                             max_range=6,
+                             max_range=10,
                              range_fft_order=2048,
                              ang_fft_order=128,
                              cal_mat_file='none')
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         while plot2d.is_alive:
 
             frame = SRS.get_data()
-            tpl = get_TI_ula_calib(frame, name_file_calib='total_calibration_n512_fs12e6.npy', name_VA_file='TI_VA_indices.npy')[..., -1]
+            tpl = get_TI_ula_calib(frame, mat_calib, pair_VA_def)[..., -1]
             rpl = profile_l.range(tpl)
             apl = profile_l.angular(rpl, module=False)
 
