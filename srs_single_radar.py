@@ -25,7 +25,7 @@ if __name__ == '__main__':
         time.sleep(1)
         profile_l = Profiles(SRS, virtual_channels=np.arange(86),
                              min_range=0.5,
-                             max_range=6,
+                             max_range=10,
                              range_fft_order=2048,
                              ang_fft_order=128,
                              cal_mat_file='none')
