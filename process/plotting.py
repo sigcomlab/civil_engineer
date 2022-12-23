@@ -121,6 +121,7 @@ class PolarProjection:
         kp = im.figure.canvas.mpl_connect('key_press_event', lambda event: self._on_key(event, ))
         bp = im.figure.canvas.mpl_connect('button_press_event', lambda event: self._on_click(event, ))
         fig.canvas.draw()   # This one initialize something inside matplotlib
+        fig.tight_layout()
         plt.show(block=False)
 
         while required:

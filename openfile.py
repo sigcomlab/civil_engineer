@@ -4,14 +4,15 @@ from qtplots import Generic3DScatterItem, Plot3D, Show2D, Generic2DLineItem
 import numpy as np
 from multiprocessing import set_start_method
 from process.plotting import PolarProjection
-from radar_manager.get_data import N_DOP, N_TX, N_RX, N_SAMPLES, N_CHIPS
+from radar_manager.get_data import N_DOP
 
 from process.CSFEC import CSFEC, const
 import os
-from utils.utils import root_dir
+from utils.utils import root_dir, askopenfile
 from datetime import datetime
 now = datetime.now()
 filename = now.strftime("%m-%d-%Y_%H-%M-%S_lab_civili.h5")
+import scipy.io as sio
 
 
 class Point:
@@ -31,15 +32,16 @@ mat_calib = np.load(path_to_calib)
 
 if __name__ == '__main__':
     set_start_method('spawn')
+    filename = askopenfile('/run/media/giorgio')
 
-    with Opener('10-06-2022_19-25-11_yaris_giorgio.h5', autorun=True, pause=True) as FILE:
-        FILE.repr_speed = 1
+    with Opener(filename, autorun=True, pause=True) as FILE:
+        FILE.repr_speed = 0.3
         SRS_C = FILE['Srs_harvest_182']
         FILE.pause = False
 
         # This command is needed with SRS only
-        profile_c = Profiles(SRS_C, virtual_channels=np.arange(86), min_range=3,
-                             max_range=12, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
+        profile_c = Profiles(SRS_C, virtual_channels=np.arange(86), min_range=2.5,
+                             max_range=6.5, range_fft_order=4096, cal_mat_file='none', dump_first=0, dump_last=0)
 
         plot3d = Plot3D({'apm': Generic3DScatterItem(profile_c.num_bin * profile_c.ang_fft_order, size=1),
                          'r': Generic3DScatterItem(1, size=10, color='r'),
@@ -175,12 +177,10 @@ if __name__ == '__main__':
                         plotphase['r'].y -= plotphase['r'].y[-1]
                         plotphase['g'].y -= plotphase['g'].y[-1]
                         plotphase['b'].y -= plotphase['b'].y[-1]
-                    elif ev[1] == 'd':
-                        print('saving to npy')
-                        np.save(file='09-16-2022_11-53-18_lab_civili_' + str(FILE.time), arr=tpc)
+                    elif ev[1] == 'm':
+                        sio.savemat()
                     else:
                         print('bad modifier, ignoring: ', ev[1])
-
             # do csfe
             for angle, csfe_const, mod in zip(csfe_angles, csfe_constants, ['r', 'g', 'b']):
                 csfe_angle_idx = profile_c.angle_to_idx(angle, deg=True)
@@ -196,3 +196,11 @@ if __name__ == '__main__':
             plotampli['r'].append(np.absolute(ap[modifier_dict['r'].range_idx, modifier_dict['r'].angle_idx]))
             plotampli['g'].append(np.absolute(ap[modifier_dict['g'].range_idx, modifier_dict['g'].angle_idx]))
             plotampli['b'].append(np.absolute(ap[modifier_dict['b'].range_idx, modifier_dict['b'].angle_idx]))
+
+
+
+
+
+
+
+

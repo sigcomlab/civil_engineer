@@ -75,6 +75,13 @@ class Player:
         self._dset = self._file[self._group]['raw_data']
         self._is_ready.value = 1
 
+    def display_params(self):
+        """Prints all the parameters of an object"""
+        print('\n\n{} PARAMETERS:'.format(self.str_id))
+        for k in self.params.keys():
+            print(k + ':', self.params[k])
+        print('\n\n')
+
     @property
     def n_frames(self):
         return self._n_frames
@@ -235,15 +242,29 @@ class Opener(dict):
             self._cursor_moved.value = 1
         else:
             self._cursor_moved.value = 0
-        while self.cursor_moved:
+        while self._cursor_moved.value == 1:
             time.sleep(0.01)
 
     @time.setter
     def time(self, value):
-        self.idx = np.argmin(np.absolute(self._timestamp_table[:, 0] - value))
-        ts, dev, frame_idx = self._timestamp_table[self.idx, :]
-        self._time.value = ts
-        self.cursor_moved = 1
+        """
+        Set the current file time.
+        """
+        if self._frame_idx.value+1 < self._timestamp_table.shape[0]:
+            # If you move the time "to the future" wrt current time, it forces to take the next frame for every
+            if value > self._time.value:
+                self.idx = np.argmin(np.absolute(self._timestamp_table[self._frame_idx.value+1:, 0] - value))+self._frame_idx.value
+            elif value > self._time.value:
+                self.idx = np.argmin(np.absolute(self._timestamp_table[:self._frame_idx.value+1, 0] - value))
+            ts, dev, frame_idx = self._timestamp_table[self.idx, :]
+            self._time.value = ts
+
+            self.cursor_moved = 1
+        else:
+            print('Reach the end of the dataset')
+            self._end_of_dataset.value = True
+            self.pause = True
+            self.cursor_moved = False
 
     @property
     def eof(self):
@@ -281,7 +302,7 @@ class Opener(dict):
 
             # If pause is set, stay there and check if it is still required
             while self.pause and self._required.value and not self.cursor_moved:
-                time.sleep(0.1)
+                time.sleep(0.01)
 
             if not self._required.value:
                 print('Stopping player.')
@@ -313,7 +334,7 @@ class Opener(dict):
                                     displacement -= 1
                             self[self._group_list[k]].frame_idx = int(frame_idx)
 
-                    self.cursor_moved = False
+                    self._cursor_moved.value = 0
                 self.idx += 1
                 if self.idx >= self._timestamp_table.shape[0]:
                     print('PLAYER: reached the end of the dataset')
